@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Clientes</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+    <!-- Tela Login -->
+    <section class="tela-login">
+    <h2>Login</h2>
+    <input type="text" name="email" id="email" placeholder="usuario@gmail.com"> <br>
+    <input type="password" name="senha" id="senha" placeholder="***********"> <br>
+    <button class="botao" onclick="login()">Entrar</button>
+    <hr>
+    </section>
+    <!-- Tela para ver clientes -->
+    <h4>Lista de Clientes</h4>
+    <ul id="clientes"></ul>
+    <hr>
+    <!-- Tela Criar Cliente-->
+    <section class="tela-add">
+    <h4>Adiconar Cliente</h4>
+    <input type="text" name="nome" id="nome" placeholder="Nome..."> <br>
+    <input type="text" name="idade" id="idade" placeholder="Idade..."> <br>
+    <input type="text" name="lugar" id="lugar" placeholder="Lugar..."> <br>
+    <input type="text" name="produto" id="produto" placeholder="Produto..."> <br>
+    <input type="text" name="preco" id="preco" placeholder="Preco..."> <br>
+    <button class="botao" onclick="criarCliente()">Criar</button>
+    <hr>
+    </section>
+    <!--Tela de Edição de Clientes-->
+    <hr>
+    <section class="tela-edit">
+    <h4>Editar Cliente</h4>
+    <input type="text" name="idEdit" id="idEdit" placeholder="ID" readonly> <br>
+    <input type="text" name="nomeEdit" id="nomeEdit" placeholder="Nome"> <br>
+    <input type="number" name="idadeEdit" id="idadeEdit" placeholder="Idade"> <br>
+    <input type="text" name="lugarEdit" id="lugarEdit" placeholder="Lugar"> <br>
+    <input type="text" name="produtoEdit" id="produtoEdit" placeholder="Produto"> <br>
+    <input type="number" name="precoEdit" id="precoEdit" placeholder="Nome"> <br>
+    <button class="botao" onclick="updateCliente()">Editar</button>
+    </section>
+    <!--NO ONCLICK DA TELA-EDIT ESTÁ A FUNÇÃO PARA ATUALIZAR O CLIENTE ^^^^-->
+</body>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+<script>
+
+    var axiosConfig = {
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
+    }
+    // Função para acessar Login
+    function login() {
+        var campoEmail = document.getElementById("email");
+        var campoSenha = document.getElementById("senha");
+
+        var email = campoEmail.value;
+        var senha = campoSenha.value;
+
+        axios.post("http://localhost:3000/autenticacao", {
+            email,
+            senha
+        }).then(res => {
+            var token = res.data.token;
+            localStorage.setItem("token", token);
+            location.reload()
+        }).catch(error => {
+            alert("Login ou Senha Incorreta!")
+        })
+    }
+    // Função para Criar Cliente
+    function criarCliente() {
+        var nomeInput = document.getElementById("nome");
+        var idadeInput = document.getElementById("idade");
+        var lugarInput = document.getElementById("lugar");
+        var produtoInput = document.getElementById("produto");
+        var precoInput = document.getElementById("preco");
+
+        var cliente = {
+            nome: nomeInput.value,
+            idade: idadeInput.value,
+            lugar: lugarInput.value,
+            produto: produtoInput.value,
+            preco: precoInput.value
+        }
+        axios.post("http://localhost:3000/cliente", cliente, axiosConfig).then(res => {
+            if(res.status == 200) {
+                alert("Cliente Cadastrado");
+                location.reload()
+            }
+        }).catch(err => {
+            console.log(err)
+        })
+
+    }
+    // Função para Deletar Cliente 
+    function deletaCliente(listaCliente) {
+        var id = listaCliente.getAttribute("dado-id");
+        axios.delete("http://localhost:3000/cliente/" + id, axiosConfig).then(res => {
+            alert("Cliente Deletado!");
+            location.reload();
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+    // Mostrar valores do Cliente no Campo De Edição
+    function editCliente(listaCliente) {
+        var id = listaCliente.getAttribute("dado-id");
+        var nome = listaCliente.getAttribute("dado-nome");
+        var idade = listaCliente.getAttribute("dado-idade");
+        var lugar = listaCliente.getAttribute("dado-lugar");
+        var produto = listaCliente.getAttribute("dado-produto");
+        var preco = listaCliente.getAttribute("dado-preco");
+
+        document.getElementById("idEdit").value = id;
+        document.getElementById("nomeEdit").value = nome;
+        document.getElementById("idadeEdit").value = idade;
+        document.getElementById("lugarEdit").value = lugar;
+        document.getElementById("produtoEdit").value = produto;
+        document.getElementById("precoEdit").value = preco;
+    }
+    // Função para Alterar dados do Cliente
+    function updateCliente() {
+        var idInput = document.getElementById("idEdit");
+        var nomeInput = document.getElementById("nomeEdit");
+        var idadeInput = document.getElementById("idadeEdit");
+        var lugarInput = document.getElementById("lugarEdit");
+        var produtoInput = document.getElementById("produtoEdit");
+        var precoInput = document.getElementById("precoEdit");
+
+        var cliente = {
+            nome: nomeInput.value,
+            idade: idadeInput.value,
+            lugar: lugarInput.value,
+            produto: produtoInput.value,
+            preco: precoInput.value
+        }
+        var id = idInput.value;
+
+        axios.put("http://localhost:3000/cliente/"+id, axiosConfig).then(res => {
+            if(res.status == 200) {
+                alert("Cliente Atualizado!");
+                location.reload()
+            }
+        }).catch(error => {
+            console.log(error)
+        })
+
+    }
+
+    // Pegar todos os Clientes 
+    axios.get("http://localhost:3000/clientes", axiosConfig).then(response => {
+        var clientes = response.data;
+        var lista = document.getElementById("clientes");
+
+        clientes.forEach(cliente => {
+            var item = document.createElement("li");
+
+            item.setAttribute("dado-id", cliente.id);
+            item.setAttribute("dado-nome", cliente.nome);
+            item.setAttribute("dado-idade", cliente.idade);
+            item.setAttribute("dado-lugar", cliente.lugar);
+            item.setAttribute("dado-produto", cliente.produto);
+            item.setAttribute("dado-preco", cliente.preco);
+
+            item.innerHTML = "Id:" + cliente.id + "|  Nome:" + cliente.nome + "|  Idade:" + cliente.idade + "|  Lugar:" + cliente.lugar + "|  Produto:" + cliente.produto + "|  Preço:" + cliente.preco + " ";
+
+            // Criar o botão deletar dentro do HTML
+            var deleteBtn = document.createElement("button");
+            deleteBtn.innerHTML = "Deletar";
+            deleteBtn.addEventListener("click", function() {
+                deletaCliente(item)
+            })
+            // Criar o botão para Editar dentro do HTML para mostrar valores no campo de edição
+            var editBtn = document.createElement("button");
+            editBtn.innerHTML = "Editar";
+            editBtn.addEventListener("click", function() {
+                editCliente(item)
+            })
+            
+            lista.appendChild(item);
+            item.appendChild(deleteBtn)
+            item.appendChild(editBtn);
+        });
+
+        }).catch((err) => {
+            console.log(err)
+        })
+</script>
